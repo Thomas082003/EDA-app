@@ -6,7 +6,9 @@ from PIL import Image
 
 def eda_page():
     # Load logo image
+    import os
     logo_path = "images/logo.jpeg"  # Adjust this path as necessary
+    print("Absolute path to logo:", os.path.abspath(logo_path))  # Debugging statement
     logo = Image.open(logo_path)
 
     st.header("Exploratory Data Analysis")
