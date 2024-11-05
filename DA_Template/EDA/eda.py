@@ -12,7 +12,7 @@ def eda_page():
     st.header("Exploratory Data Analysis")
 
     # Define data path and load data
-    path = '../data'  # Adjust the relative path based on your directory structure
+    path = 'data'  # Adjust the relative path based on your directory structure
     files = {
         'X': ['x/infotracer-x-abril-24.csv', 'x/infotracer-x-mayo-24.csv', 'x/infotracer-x-junio-24.csv', 'x/infotracer-x-julio-24.csv'],
         'Facebook': ['fb/infotracer-facebook-abril-24.csv', 'fb/infotracer-facebook-mayo-24.csv', 'fb/infotracer-facebook-junio-24.csv', 'fb/infotracer-facebook-julio-24.csv'],
