@@ -1,5 +1,12 @@
 streamlit
 pandas
+numpy
+matplotlib
+seaborn
 plotly
 wordcloud
-seaborn
+Pillow
+base64io
+python-dateutil
+pytz
+scipy
