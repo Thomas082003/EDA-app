@@ -94,9 +94,9 @@ def plot_combined_interactions_plotly(df, col_name, start_date, end_date, logo_i
     # Show the figure
     st.plotly_chart(fig)
 
-def plot_top_8_peak_days(df, logo):
+def plot_top_8_peak_days(df, logo_path):
     # Ensure 'datetime' is in datetime format
-    df['datetime'] = pd.to_datetime(df['datetime'])
+    df['datetime'] = pd.to_datetime(df['datetime'], errors='coerce')
 
     # Convert to Mexico City timezone if needed
     if df['datetime'].dt.tz is None:
@@ -104,11 +104,14 @@ def plot_top_8_peak_days(df, logo):
     else:
         df['datetime'] = df['datetime'].dt.tz_convert('America/Mexico_City')
 
+    # Drop rows where 'datetime' is NaT
+    df = df.dropna(subset=['datetime'])
+
     # Filter only platform 'X' and data after April 1, 2024
-    df = df[df['datetime'] >= '2024-04-01']
+    df = df[(df['platform'] == 'X') & (df['datetime'] >= '2024-04-01')]
 
     # Calculate daily interactions
-    daily_interactions = df[df['platform'] == 'X'].groupby(df['datetime'].dt.date)['num_interaction'].sum()
+    daily_interactions = df.groupby(df['datetime'].dt.date)['num_interaction'].sum()
 
     # Identify the 8 days with the highest interactions
     top_8_peak_days = daily_interactions.nlargest(8)
@@ -120,96 +123,81 @@ def plot_top_8_peak_days(df, logo):
         '2024-05-26': 'Debate 3',
         '2024-06-02': 'Election Day'
     }
-
-    # Convert key_dates to datetime for comparison
     key_dates = {pd.Timestamp(date): label for date, label in key_dates.items()}
 
     # Set up Seaborn style
     sns.set(style="whitegrid")
 
-    # Color cycle for each week
-    colors = cycle(['#4A90E2', '#FF5733', '#33C9FF', '#FF33A1', '#75FF33', '#FFD700', '#C70039', '#581845', '#900C3F'])
-
     plt.figure(figsize=(14, 8))
 
-    # Set date range for x-axis
-    start_date = pd.to_datetime("2024-04-03")  # Wednesday, April 3
-    end_date = pd.to_datetime("2024-06-05")    # Wednesday, June 5
-    current_color = next(colors)
+    # Plot daily interactions
+    plt.plot(daily_interactions.index, daily_interactions.values, color='blue', linewidth=2)
+    plt.scatter(top_8_peak_days.index, top_8_peak_days.values, color='#D0021B', s=100, label='Top 8 Peak Days', zorder=5, edgecolor='black')
 
-    # Plotting the line, changing color each week
-    previous_date = daily_interactions.index[0]
-    for current_date, value in daily_interactions.items():
-        current_date_ts = pd.Timestamp(current_date)
-        if current_date_ts >= start_date and (current_date_ts - start_date).days % 7 == 0:
-            current_color = next(colors)
-        plt.plot([previous_date, current_date], [daily_interactions[previous_date], value], color=current_color, linewidth=2, marker='o')
-        previous_date = current_date
-
-    # Add markers for the top 8 peak days
-    plt.scatter(top_8_peak_days.index, top_8_peak_days.values, color='#D0021B', s=100, label='Top 8 Peak Days', zorder=5, edgecolor='black', linewidth=1)
-
-    # Add markers for key dates (debates and election day)
+    # Mark key dates
     for date, label in key_dates.items():
         if date in daily_interactions.index:
-            plt.scatter(date, daily_interactions[date], color='purple', s=120, label=label, edgecolor='black', zorder=5)
+            plt.scatter(date, daily_interactions[date], color='purple', s=120, label=label, edgecolor='black')
             plt.annotate(f'{label}\n{daily_interactions[date]}', xy=(date, daily_interactions[date]), xytext=(0, 10),
                          textcoords='offset points', ha='center', color='purple', fontsize=10,
                          bbox=dict(boxstyle='round,pad=0.3', edgecolor='none', facecolor='lavender', alpha=0.8))
 
-    # Add annotations for the top 8 peak days
+    # Annotate top 8 peak days
     for date, value in top_8_peak_days.items():
         plt.annotate(f'{date}\n{value}', xy=(date, value), xytext=(0, 10),
                      textcoords='offset points', ha='center', color='black', fontsize=10,
                      bbox=dict(boxstyle='round,pad=0.3', edgecolor='none', facecolor='white', alpha=0.8))
 
     # Titles and labels
-    plt.suptitle('X Interaction Trends Over Time, Highlighting Key Peak Days', fontsize=18, fontweight='bold', color='#333333')
-    plt.title('The top 8 peak days indicate key events in the election period', fontsize=12, fontweight='bold', color='gray', pad=20)
-    plt.xlabel('Date', fontsize=14, color='#333333')
-    plt.ylabel('Number of Interactions', fontsize=14, color='#333333')
+    plt.title("Top 8 Peak Days of Interaction on X", fontsize=18, color='#333333')
+    plt.xlabel("Date", fontsize=14)
+    plt.ylabel("Number of Interactions", fontsize=14)
     plt.legend(fontsize=12)
-
-    # Configure x-axis for weekly ticks
-    plt.gca().set_xlim([start_date, end_date])
-    plt.gca().xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=2))  # Every Wednesday
-    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-
-    plt.xticks(rotation=45, fontsize=12)
-    plt.yticks(fontsize=12)
-    plt.ylim(0, 3000000)
-
-    plt.tight_layout()
     plt.grid(visible=True, linestyle='--', alpha=0.7)
 
     # Add logo in the upper-left corner
-    newax = plt.gcf().add_axes([0.05, .9, 0.07, 0.10], anchor='NW', zorder=-1)
-    newax.imshow(logo)
-    newax.axis('off')
+    try:
+        logo = Image.open(logo_path)
+        newax = plt.gcf().add_axes([0.05, .9, 0.07, 0.10], anchor='NW', zorder=-1)
+        newax.imshow(logo)
+        newax.axis('off')
+    except FileNotFoundError:
+        print(f"Logo not found at {logo_path}. Skipping logo display.")
+    except Exception as e:
+        print(f"Error loading logo: {e}")
 
+    # Display plot in Streamlit
     st.pyplot(plt.gcf())
 
-def plot_curves_interactions(df, logo):
+def plot_curves_interactions(df, logo_path):
+    # Load the logo as a PIL image
+    try:
+        logo = Image.open(logo_path)
+    except FileNotFoundError:
+        st.error("Logo file not found. Please check the path.")
+        return
+
     # Ensure 'datetime' is in datetime format
-    df['datetime'] = pd.to_datetime(df['datetime'])
-    df['date'] = df['datetime'].dt.date  # Extract only the date
+    df['datetime'] = pd.to_datetime(df['datetime'], errors='coerce')
+    df = df.dropna(subset=['datetime'])  # Drop invalid rows
+
+    # Extract only the date
+    df['date'] = df['datetime'].dt.date
 
     # Filter only platform 'X'
     df = df[df['platform'] == 'X']
 
-    # Define the dates of interest and their titles
+    # Define dates of interest and their titles
     debate_dates = ['2024-04-07', '2024-04-28', '2024-05-19', '2024-06-02']
     titles = ['1st Debate', '2nd Debate', '3rd Debate', 'Election Day']
-    colors = ['green', 'green', 'green', 'green']  # Colors for debates and election
+    colors = ['green', 'blue', 'orange', 'red']  # Colors for debates and election
 
     # Create a 2x2 grid of subplots
     fig, axes = plt.subplots(2, 2, figsize=(16, 12))
     axes = axes.flatten()
 
-    # Initialize the variable for maximum interactions
+    # Calculate the maximum number of interactions for scaling the y-axis
     max_interactions = 0
-
-    # Find the maximum number of interactions for setting y-axis limits
     for date in debate_dates:
         start_date = pd.to_datetime(date) - pd.Timedelta(days=3)
         end_date = pd.to_datetime(date) + pd.Timedelta(days=3)
@@ -217,49 +205,33 @@ def plot_curves_interactions(df, logo):
         daily_interactions = df_event.groupby('date')['num_interaction'].sum().reset_index()
         max_interactions = max(max_interactions, daily_interactions['num_interaction'].max())
 
-    # Set the y-axis limit with a 10% margin
+    # Set y-axis limit with a margin
     y_limit = max_interactions * 1.1
 
+    # Loop through each debate date
     for i, date in enumerate(debate_dates):
-        # Define date range (three days before and after each event)
         start_date = pd.to_datetime(date) - pd.Timedelta(days=3)
         end_date = pd.to_datetime(date) + pd.Timedelta(days=3)
-
-        # Filter data for the specific date range
         df_event = df[(df['date'] >= start_date.date()) & (df['date'] <= end_date.date())]
-
-        # Group by day and sum interactions
         daily_interactions = df_event.groupby('date')['num_interaction'].sum().reset_index()
 
-        # Ensure all days in the range are covered
+        # Fill missing dates in the range
         all_dates = pd.date_range(start=start_date, end=end_date).date
         daily_interactions = daily_interactions.set_index('date').reindex(all_dates, fill_value=0).reset_index()
         daily_interactions.columns = ['date', 'num_interaction']
-
-        # Add weekday column
         daily_interactions['weekday'] = pd.to_datetime(daily_interactions['date']).dt.day_name()
 
-        # Plot interactions for the current event
-        axes[i].fill_between(daily_interactions['weekday'], daily_interactions['num_interaction'],
-                             color=colors[i], alpha=0.5)
-        axes[i].plot(daily_interactions['weekday'], daily_interactions['num_interaction'],
-                     marker='o', linestyle='-', color=colors[i], linewidth=2, markersize=8)
+        # Plot data
+        axes[i].fill_between(daily_interactions['weekday'], daily_interactions['num_interaction'], color=colors[i], alpha=0.3)
+        axes[i].plot(daily_interactions['weekday'], daily_interactions['num_interaction'], marker='o', linestyle='-', color=colors[i], linewidth=2)
 
-        # Add a point and label for the event date
-        event_interactions = daily_interactions[daily_interactions['date'] == pd.to_datetime(date)]
-        if not event_interactions.empty:
-            x = event_interactions['weekday'].values[0]
-            y = event_interactions['num_interaction'].values[0]
-            axes[i].plot(x, y, 'ro', markersize=10)  # Highlight the event date
-            axes[i].text(x, y, f'{y}', ha='center', va='bottom', fontweight='bold', color='red')
-
-        # Set titles and labels
-        axes[i].set_title(f'{titles[i]}', fontsize=18, fontweight='bold', color='#333333')
-        axes[i].set_xlabel('Day of the Week', fontsize=14, color='#333333')
-        axes[i].set_ylabel('Number of Interactions', fontsize=14, color='#333333')
-        axes[i].tick_params(axis='both', which='major', labelsize=12)
-        axes[i].grid(visible=True, linestyle='--', alpha=0.7)
-        axes[i].set_ylim(0, y_limit)
+        # Highlight debate day
+        event_date = pd.to_datetime(date).date()
+        if event_date in daily_interactions['date'].values:
+            event_value = daily_interactions[daily_interactions['date'] == event_date]['num_interaction'].values[0]
+            axes[i].scatter(['Sunday'], [event_value], color='red', s=100, label=f"{titles[i]}")
+            axes[i].annotate(f"{event_value}", xy=(daily_interactions[daily_interactions['date'] == event_date].index[0], event_value),
+                             xytext=(0, 10), textcoords='offset points', ha='center', color='red', fontsize=10)
 
     # Main title and subtitle
     fig.suptitle('Interaction Patterns Throughout the Weeks of Mexico’s Four Key Election Events on X',
@@ -271,11 +243,12 @@ def plot_curves_interactions(df, logo):
     plt.tight_layout(rect=[0, 0, 1, 0.96])
 
     # Add the logo in the top-left corner
-    newax = plt.gcf().add_axes([0.02, 0.9, 0.07, 0.1], anchor='NW', zorder=-1)
+    newax = fig.add_axes([0.02, 0.9, 0.1, 0.1], anchor='NW', zorder=-1)
     newax.imshow(logo)
     newax.axis('off')
 
-    st.pyplot(plt.gcf())
+    # Show the plot using Streamlit
+    st.pyplot(fig)
 
 def plot_candidate_hourly_heatmap(df, logo):
     # Extract hour and filter platform

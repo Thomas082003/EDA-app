@@ -1,74 +1,44 @@
+import os
+import pandas as pd
 import streamlit as st
 
-st.header("Settings")
-st.write(f"You are logged in as {st.session_state.role}.")
-st.title("⚙️ Settings")
-st.write("Adjust your preferences here.")
+# Default configuration for the app
+DATA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
 
+FILES = {
+    'X': ['x/infotracer-x-abril-24.csv', 'x/infotracer-x-mayo-24.csv', 'x/infotracer-x-junio-24.csv', 'x/infotracer-x-julio-24.csv'],
+    'Facebook': ['fb/infotracer-facebook-abril-24.csv', 'fb/infotracer-facebook-mayo-24.csv', 'fb/infotracer-facebook-junio-24.csv', 'fb/infotracer-facebook-julio-24.csv'],
+    'Instagram': ['ig/infotracer-instagram-abril-24.csv', 'ig/infotracer-instagram-mayo-24.csv', 'ig/infotracer-instagram-junio-24.csv', 'ig/infotracer-instagram-julio-24.csv'],
+    'YouTube': ['you/infotracer-youtube-abril-24.csv', 'you/infotracer-youtube-mayo-24.csv', 'you/infotracer-youtube-junio-24.csv', 'you/infotracer-youtube-julio-24.csv']
+}
 
-# Initialize dark mode state if not set
-if "dark_mode" not in st.session_state:
-    st.session_state.dark_mode = False  # Default to light mode
+DEFAULT_START_DATE = pd.to_datetime("2024-04-01")
+DEFAULT_END_DATE = pd.to_datetime("2024-07-31")
+PLATFORMS = ['Facebook', 'Instagram', 'X', 'YouTube']
 
-# CSS for light and dark modes
-def get_css(dark_mode):
-    if dark_mode:
-        return """
-        <style>
-            body {
-                background-color: #0E1117;
-                color: #FAFAFA;
-            }
-            .stButton>button {
-                background-color: #1F1F1F;
-                color: white;
-                border: 1px solid #FAFAFA;
-            }
-            .stTextInput>div>input {
-                background-color: #262626;
-                color: white;
-            }
-            .block-container {
-                background-color: #0E1117;
-            }
-        </style>
-        """
-    else:
-        return """
-        <style>
-            body {
-                background-color: #FFFFFF;
-                color: black;
-            }
-            .stButton>button {
-                background-color: #F0F2F6;
-                color: black;
-                border: 1px solid black;
-            }
-            .stTextInput>div>input {
-                background-color: #FFF;
-                color: black;
-            }
-            .block-container {
-                background-color: #FFFFFF;
-            }
-        </style>
-        """
+# Apply dark mode CSS by default
+def apply_dark_theme():
+    css = """
+    <style>
+        body {
+            background-color: #0E1117;
+            color: #FAFAFA;
+        }
+        .stButton>button {
+            background-color: #1F1F1F;
+            color: white;
+            border: 1px solid #FAFAFA;
+        }
+        .stTextInput>div>input {
+            background-color: #262626;
+            color: white;
+        }
+        .block-container {
+            background-color: #0E1117;
+        }
+    </style>
+    """
+    return css
 
-# Toggle dark mode with a checkbox
-st.sidebar.title("Theme Settings")
-toggle = st.sidebar.checkbox("Enable Dark Mode", value=st.session_state.dark_mode)
-
-# Update session state and apply CSS
-st.session_state.dark_mode = toggle
-st.markdown(get_css(st.session_state.dark_mode), unsafe_allow_html=True)
-
-# App content
-st.title("🌞 Light/Dark Mode Toggle with Streamlit")
-st.write("Switch between light and dark themes using the checkbox in the sidebar.")
-
-# Example input to demonstrate theming effects
-user_input = st.text_input("Enter some text:")
-st.write(f"You entered: {user_input}")
-st.button("Click me")
-
+# Apply the dark theme CSS globally
+st.markdown(apply_dark_theme(), unsafe_allow_html=True)

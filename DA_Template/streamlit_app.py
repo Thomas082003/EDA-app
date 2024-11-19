@@ -1,26 +1,36 @@
 import streamlit as st
-from EDA.eda import eda_page
-from Background.intro import intro_page
-from Background.facts import facts_page
-from Background.about import about_page
-from Background.example import copyright_page
-
-st.set_page_config(page_title="Data Analytics App", page_icon=":bar_chart:")
-
-# Title and logo
-st.title("Data Analytics")
-
-# Define pages in the dictionary
-page_dict = {
-    "Introduction": intro_page,
-    "EDA": eda_page,
-    "About Us": about_page,
-}
+import os
+from Background import intro, about, team_analysis, dashboard
+from EDA.eda import load_data
+import settings
 
 # Sidebar navigation
-st.sidebar.title("Navigation")
-selected_page = st.sidebar.selectbox("Choose a page", list(page_dict.keys()))
+st.sidebar.title("Main Menu")
+page = st.sidebar.radio(
+    "Navigate to:",
+    ["Introduction", "About Us", "Team Analysis", "Dashboard"]
+)
 
-# Run the selected page function
-if selected_page in page_dict:
-    page_dict[selected_page]()
+# Attempt to load data
+try:
+    df = load_data(settings.DATA_PATH, settings.FILES)
+except Exception as e:
+    st.error(f"Error loading data: {e}")
+
+# Debugging: Ensure the logo path exists
+logo = "images/logo.jpeg"  # Replace with your logo path or object
+if not os.path.exists(logo):
+    st.error(f"Logo not found: {logo}")
+    
+# Page selection logic
+if page == "Introduction":
+    intro.intro_page()
+elif page == "About Us":
+    about.about_page()
+elif page == "Team Analysis":
+    if df is not None and not df.empty and logo:
+        team_analysis.team_analysis_page(df, logo)
+    else:
+        st.error("Data or logo not loaded.")
+elif page == "Interactive Dashboard":
+    dashboard.dashboard_page()

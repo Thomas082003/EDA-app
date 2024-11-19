@@ -1,74 +1,29 @@
-import streamlit as st
 import pandas as pd
-from .utils import load_data, selectDataByDate
-from .plotting import plot_combined_interactions_plotly, plot_top_8_peak_days, plot_curves_interactions, plot_hourly_trends_selected_weeks
-from PIL import Image
+import os
 
-def eda_page():
-    # Load logo image
-    logo_path = "DA_Template/images/logo.jpeg"
-    logo = Image.open(logo_path)
+def load_data(path, files_dict):
+    df = pd.DataFrame()
+    for platform, file_list in files_dict.items():
+        for file_name in file_list:
+            file_path = os.path.join(path, file_name)
+            if not os.path.exists(file_path):
+                print(f"Warning: File not found - {file_path}")
+                continue
+            temp_df = pd.read_csv(file_path)
+            temp_df['platform'] = platform
+            df = pd.concat([df, temp_df], ignore_index=True)
+    return df
 
-    st.header("Exploratory Data Analysis")
-
-    # Define data path and load data
-    path = 'data'  # Adjust the relative path based on your directory structure
-    files = {
-        'X': ['x/infotracer-x-abril-24.csv', 'x/infotracer-x-mayo-24.csv', 'x/infotracer-x-junio-24.csv', 'x/infotracer-x-julio-24.csv'],
-        'Facebook': ['fb/infotracer-facebook-abril-24.csv', 'fb/infotracer-facebook-mayo-24.csv', 'fb/infotracer-facebook-junio-24.csv', 'fb/infotracer-facebook-julio-24.csv'],
-        'Instagram': ['ig/infotracer-instagram-abril-24.csv', 'ig/infotracer-instagram-mayo-24.csv', 'ig/infotracer-instagram-junio-24.csv', 'ig/infotracer-instagram-julio-24.csv'],
-        'Youtube': ['you/infotracer-youtube-abril-24.csv', 'you/infotracer-youtube-mayo-24.csv', 'you/infotracer-youtube-junio-24.csv', 'you/infotracer-youtube-julio-24.csv']
-    }
-    df = load_data(path, files)
-
-    # Set the date range
-    start_date = pd.to_datetime('2024-04-01 00:00:00')
-    end_date = pd.to_datetime('2024-07-12 23:59:59')
-
-    # Filter data
-    df = selectDataByDate(df, start_date, end_date)
-
-    # Display data summary
-    st.write("### Top 8 Peak Days")
-
-    # Call plot_top_8_peak_days
-    plot_top_8_peak_days(df, logo)
-
-    # Interpretation paragraph for Top 8 Peak Days plot
-    st.markdown(
-        """
-        <p style='font-size: 1.1em; color: white;'>
-            The red dots highlight the eight peak interaction days, with some aligning with major events like debates and election day, 
-            while others may be associated with additional events that also drove high interaction volumes.
-        </p>
-        """, unsafe_allow_html=True
-    )
-
-    st.write("### Interaction Patterns Throughout the Weeks of Mexico's Four Key Election events on X")
-    # Call plot_curves_interactions
-    plot_curves_interactions(df, logo)
-
-    # Interpretation paragraph for Curve Interactions plot
-    st.markdown(
-        """
-        <p style='font-size: 1.1em; color: white;'>
-            The four graphs indicate that the weeks of the debates saw peak engagement on Mondays, 
-            supporting the observation that these major election events drive high levels of interaction early in the week as the public reacts to the debates.
-        </p>
-        """, unsafe_allow_html=True
-    )
-
-    st.write("### Hourly Interaction Trends in Selected Weeks")
-
-    # Call plot_hourly_trends_selected_weeks
-    plot_hourly_trends_selected_weeks(df, logo_path)
-
-    # Interpretation paragraph for Hourly Trends Selected Weeks plot
-    st.markdown(
-        """
-        <p style='font-size: 1.1em; color: white;'>
-            As shown above, the standard weeks exhibit a similar pattern, indicating no significant increase around 8 PM, 
-            which demonstrates normal behavior.
-        </p>
-        """, unsafe_allow_html=True
-    )
+def filter_data_by_date(df, start_date, end_date):
+    # Convert Streamlit date inputs to datetime
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
+    
+    # Ensure the 'datetime' column is in datetime format
+    df['datetime'] = pd.to_datetime(df['datetime'], errors='coerce')
+    
+    # Convert 'datetime' to UTC-6
+    df['datetime'] = pd.DatetimeIndex(df['datetime']).tz_localize('UTC').tz_convert('America/Mexico_City').tz_localize(None)
+    
+    # Filter data within the date range
+    return df[(df['datetime'] >= start_date) & (df['datetime'] <= end_date)]
