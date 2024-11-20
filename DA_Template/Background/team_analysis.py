@@ -20,7 +20,7 @@ def team_analysis_page(df, logo):
     st.markdown(
         """
         <p style='font-size: 1.1em; color: white;'>
-            The four graphs indicate that the weeks of the debates saw peak engagement on Mondays, 
+            The four graphs indicate that the weeks of the debates saw peak engagement on Sundays, 
             supporting the observation that these major election events drive high levels of interaction early in the week as the public reacts to the debates.
         </p>
         """, unsafe_allow_html=True
