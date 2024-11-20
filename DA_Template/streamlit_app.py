@@ -19,8 +19,6 @@ except Exception as e:
 
 # Debugging: Ensure the logo path exists
 logo = "images/logo.jpeg"  # Replace with your logo path or object
-if not os.path.exists(logo):
-    st.error(f"Logo not found: {logo}")
     
 # Page selection logic
 if page == "Introduction":
