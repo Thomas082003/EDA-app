@@ -1,14 +1,14 @@
 import streamlit as st
 import os
-from Background import intro, about, team_analysis, dashboard
+from Background import intro, about, team_analysis, dashboard, sentiment_analysis
 from EDA.eda import load_data
 import settings
 
 # Sidebar navigation
-st.sidebar.title("Main Menu")
+st.sidebar.title("Shaping the Nation: 2024 Electoral Sentiment Insights")
 page = st.sidebar.radio(
     "Navigate to:",
-    ["Introduction", "About Us", "Team Analysis", "Dashboard"]
+    ["Introduction", "About Us", "Team Analysis", "Dashboard", "Sentiment Analysis"]
 )
 
 # Attempt to load data
@@ -32,5 +32,7 @@ elif page == "Team Analysis":
         team_analysis.team_analysis_page(df, logo)
     else:
         st.error("Data or logo not loaded.")
-elif page == "Interactive Dashboard":
+elif page == "Dashboard":
     dashboard.dashboard_page()
+elif page == "Sentiment Analysis":  # Add this block
+    sentiment_analysis.sentiment_analysis_page()

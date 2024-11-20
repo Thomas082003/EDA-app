@@ -4,6 +4,13 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import pandas as pd
 
+color_map = {
+            'X': '#A9A9A9',        # Light gray for X to match the dark theme
+            'Facebook': '#3b5998',  # Facebook's blue
+            'Instagram': '#C13584',  # Instagram's magenta
+            'YouTube': '#FF0000',  # YouTube's red
+}
+
 candidate_color_map = {
     "Claudia Sheinbaum": "#800000",  # Deep maroon for Morena
     "Xóchitl Gálvez": "#0000FF",     # Bright blue for PAN
@@ -11,9 +18,10 @@ candidate_color_map = {
 }
 
 def plot_interactions(df):
+    global color_map
     if 'datetime' in df and not df.empty:
         color_map = {
-            'X': 'black',        # Black for X
+            'X': '#A9A9A9',        # Light gray for X to match the dark theme
             'Facebook': '#3b5998',  # Facebook's blue
             'Instagram': '#C13584',  # Instagram's magenta
             'YouTube': '#FF0000',  # YouTube's red
@@ -49,9 +57,10 @@ def plot_candidate_comparison(df):
 
 
 def plot_platform_distribution(df):
+    global color_map
     if 'platform' in df and not df.empty:
         color_map = {
-            'X': 'black',        # Black for X
+            'X': '#A9A9A9',        # Light gray for X to match the dark theme
             'Facebook': '#3b5998',  # Facebook's blue
             'Instagram': '#C13584',  # Instagram's magenta
             'YouTube': '#FF0000',  # YouTube's red
@@ -120,6 +129,9 @@ def plot_word_cloud(df):
 
 def plot_avg_interactions_by_hour(df):
     if 'datetime' in df and not df.empty:
+        # Ensure a copy of the DataFrame is used
+        df = df.copy()
+
         # Extract hour from datetime
         df['hour'] = pd.to_datetime(df['datetime']).dt.hour
         
@@ -142,3 +154,4 @@ def plot_avg_interactions_by_hour(df):
         st.plotly_chart(fig)
     else:
         st.write("No data available for this visualization.")
+
