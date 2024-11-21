@@ -1,5 +1,5 @@
 import streamlit as st
-from EDA.plotting import plot_top_8_peak_days, plot_curves_interactions, plot_hourly_trends_selected_weeks
+from EDA.plotting import plot_top_8_peak_days, plot_curves_interactions, plot_hourly_trends_selected_weeks, plot_weekly_interactions_with_green, plot_hourly_interactions, plot_combined_hourly_trends_streamlit
 
 def team_analysis_page(df, logo):
     st.write("### Top 8 Peak Days")
@@ -37,3 +37,11 @@ def team_analysis_page(df, logo):
         </p>
         """, unsafe_allow_html=True
     )
+
+    st.write("### Weekly Interactions")
+    plot_weekly_interactions_with_green(df)
+    st.write("### Hourly Interaction Trends in Selected Weeks")
+    plot_hourly_interactions(df, logo)
+    st.write("### Hourly Trends")
+    # Plot for event weeks
+    plot_combined_hourly_trends_streamlit(df, logo, selected_weeks=[1, 4, 7, 9], color='green')
