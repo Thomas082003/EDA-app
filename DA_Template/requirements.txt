@@ -11,3 +11,4 @@ python-dateutil
 pytz
 scipy
 joblib
+spacy
